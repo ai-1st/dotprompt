@@ -1,0 +1,27 @@
+A python cli application, built using the "click" framework. It takes prompts 
+stored in the local filesystem and produces code files, stored along with the prompts.
+
+The prompt files have ".prompt" suffix. For example, a prompt to produce example.py 
+will be stored in the example.py.prompt file.
+
+To produce code from the prompt use ChatBedrock from langchain_aws package.
+Use anthropic.claude-3-5-sonnet-20240620-v1:0 model in us-east-1 region.
+Make sure you initialize the model exactly like this:
+```
+    chat = ChatBedrock(
+        model_id="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        region_name="us-east-1"
+    )
+```
+
+Use these system instructions for the AI:
+<instructions>Output just the file content, nothing else. 
+Do not enclose the code in triple quotes.</instructions>
+
+Also provide a one-shot example, such as 
+<user>Hello world in python</user>
+<assistant>print('Hello world')</assistant>
+
+Please avoid these errors and warnings:
+ValueError: System message must be at beginning of message list.
+LangChainDeprecationWarning: The method `BaseChatModel.__call__` was deprecated in langchain-core 0.1.7 and will be removed in 0.3.0. Use invoke instead.

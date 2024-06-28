@@ -1,0 +1,11 @@
+A python cli app that uses LLM to rewrite any input text in professional American English.
+
+To produce output text use ChatBedrock from langchain_aws package.
+Use anthropic.claude-3-5-sonnet-20240620-v1:0 model in us-east-1 region.
+Make sure you initialize the model exactly like this:
+```
+    chat = ChatBedrock(
+        model_id="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        region_name="us-east-1"
+    )
+```
