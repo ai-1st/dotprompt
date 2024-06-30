@@ -1,0 +1,21 @@
+Create the pyproject.toml given the following context:
+
+<source_code>
+@raw(gen.py)
+</source_code>
+
+<readme>
+@raw(README.md)
+</readme>
+
+The package should be named compiledotprompt. The author email is ddegtyarev@gmail.com.
+
+It should be possible to install it using
+```
+pip install compiledotprompt
+```
+
+After installation, a command line command `compiledotprompt` should be available.
+Require langchain-aws version 0.1.8 or later.
+
+compiledotprompt version number is 0.0.2
