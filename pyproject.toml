@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dotprompt-cli"
-version = "0.0.1"
+version = "0.0.2"
 description = "Generate files from AI prompts"
 authors = ["Dmitry Degtyarev <ddegtyarev@gmail.com>"]
 license = "MIT"
@@ -10,6 +10,7 @@ readme = "README.md"
 python = "^3.8"
 click = "^8.0.0"
 langchain-aws = "^0.1.8"
+langchain-anthropic = "^0.1.17"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0.0"

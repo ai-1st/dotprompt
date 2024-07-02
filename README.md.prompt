@@ -32,3 +32,6 @@ exception/error messages.
 
 Use https://twitter.com/Mitek99 as a way to contact the author. Mention that the software uses the MIT license.
 Don't include the Acknoledgements section.
+
+Include a build section explaining how to build this project 
+using the 'build' python module and deploy it to pypi.

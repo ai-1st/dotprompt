@@ -1,0 +1,38 @@
+
+Create a python module that defines a 'llm_invoke' function to invoke an LLM model.
+The function takes three params:
+- provider, which can be either 'bedrock' or 'anthropic', the default being 'bedrock'
+- model, the default being 'anthropic.claude-3-5-sonnet-20240620-v1:0'
+- messages, an array of chat messages to pass to the model
+The function returns LLM's answer.
+
+For 'bedrock' provider use ChatBedrock from langchain_aws package. Assume AWS keys are 
+somewhere in the environment or config files.
+Use anthropic.claude-3-5-sonnet-20240620-v1:0 model in us-east-1 region.
+Make sure you initialize the model exactly like this:
+```
+    chat = ChatBedrock(
+        model_id="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        region_name="us-east-1"
+    )
+```
+
+For 'anthropic' provider, assume the API key is in the ANTHROPIC_API_KEY environment variable.
+```
+from langchain_anthropic import ChatAnthropic
+
+llm = ChatAnthropic(
+    model="claude-3-5-sonnet-20240620",
+    max_tokens=4096,
+    timeout=None,
+    max_retries=2
+)
+```
+
+Note:
+LangChainDeprecationWarning: The method `BaseChatModel.__call__` was 
+deprecated in langchain-core 0.1.7 and will be removed in 0.3.0. Use invoke instead.
+
+pydantic.v1.error_wrappers.ValidationError: 1 validation error for BaseMessage
+type
+  field required (type=value_error.missing)

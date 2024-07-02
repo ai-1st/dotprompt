@@ -1,46 +1,68 @@
+# This file was produced by AI from a prompt and shouldn't be edited directly.
+
 import os
+import re
 import click
-from langchain_aws import ChatBedrock
+from .models import llm_invoke
+
+def expand_directives(content, skip_directives):
+    if skip_directives:
+        return content
+
+    def replace_directive(match):
+        directive, filename = match.groups()
+        if directive == 'raw':
+            with open(filename, 'r') as f:
+                return f.read()
+        elif directive == 'prompt':
+            with open(filename, 'r') as f:
+                prompt_content = f.read()
+            return expand_directives(prompt_content, False)
+
+    pattern = r'@(raw|prompt)\((.*?)\)'
+    return re.sub(pattern, replace_directive, content)
 
 @click.command()
 @click.argument('prompt_file', type=click.Path(exists=True))
-def generate_code(prompt_file):
-    """Generate code from a prompt file."""
-    # Read the prompt from the file
+@click.option('--skip-directives', is_flag=True, help='Skip expanding @raw and @prompt directives')
+@click.option('--provider', default='bedrock', type=click.Choice(['bedrock', 'anthropic']), help='LLM provider')
+@click.option('--model', default='anthropic.claude-3-sonnet-20240229-v1:0', help='LLM model')
+def main(prompt_file, skip_directives, provider, model):
+    output_file = prompt_file[:-7] if prompt_file.endswith('.prompt') else prompt_file + '.out'
+
     with open(prompt_file, 'r') as f:
-        prompt = f.read()
+        prompt_content = f.read()
 
-    # Initialize the ChatBedrock model
-    chat = ChatBedrock(
-        model_id="anthropic.claude-3-5-sonnet-20240620-v1:0",
-        region_name="us-east-1"
-    )
+    expanded_prompt = expand_directives(prompt_content, skip_directives)
 
-    # Define system instructions and one-shot example
-    system_message = "Output just the file content, nothing else. Do not enclose the code in triple quotes."
-    example_user = "Hello world in python"
-    example_assistant = "print('Hello world')"
+    system_message = {
+        "role": "system",
+        "content": "Output just the file content, nothing else. Do not print any introductory text before the code. Do not enclose the code in triple quotes. Include a comment in the code saying that this file was produced by AI from a prompt and shouldn't be edited directly, unless generating json or other file formats that don't support comments."
+    }
 
-    # Generate code using the chat model
-    messages = [
-        {"role": "system", "content": system_message},
-        {"role": "user", "content": example_user},
-        {"role": "assistant", "content": example_assistant},
-        {"role": "user", "content": prompt}
-    ]
-    response = chat.invoke(messages)
+    user_message = {
+        "role": "user",
+        "content": "Hello world in python"
+    }
 
-    # Get the generated code
-    generated_code = response.content
+    assistant_message = {
+        "role": "assistant",
+        "content": "print('Hello world')"
+    }
 
-    # Determine the output file name
-    output_file = prompt_file.rsplit('.', 1)[0]
+    prompt_message = {
+        "role": "user",
+        "content": expanded_prompt
+    }
 
-    # Write the generated code to the output file
+    messages = [system_message, user_message, assistant_message, prompt_message]
+
+    response = llm_invoke(provider, model, messages)
+
     with open(output_file, 'w') as f:
-        f.write(generated_code)
+        f.write(response)
 
-    click.echo(f"Code generated and saved to {output_file}")
+    click.echo(f"Generated code has been saved to {output_file}")
 
 if __name__ == '__main__':
-    generate_code()
+    main()
