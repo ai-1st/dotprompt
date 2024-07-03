@@ -1,0 +1,78 @@
+Create Lambda function that regularly updates google sheets with CSV files stored in Amazon S3.
+
+Use Python for implementation. Lambda handler function should be named 'handler'.
+
+The Lambda function should read its config from a DynamoDB table named 'S3-GSHEET-EXPORTER'.
+<table_description>
+@raw(../README.md)
+</table_description>
+
+The Lambda function shall read only the records with 
+a timestamp older than the current time. Once the record is processed, it should be removed and a new record
+with a new timestamp be created instead. So the new timestamp will be current_timestamp + every_x_hours * 3600
+
+The Lambda function should read the CSV file from S3, and then paste the data into the specified google sheet into the specified tab. 
+If the tab doesn't exist it should be created. If the sheet id doesn't exist, the lambda should skip this record.
+
+Before pasting the data the sheet should be cleared. 
+
+Google API credentials should be retrieved from Amazon Secrets Manager service from the secret named "s3-gsheets-exporter/gcp-creds". 
+In this secret the following object is stored:
+{
+    "type": "service_account",
+    "project_id": "__________",
+    "private_key_id": "________",
+    "private_key": "-----BEGIN PRIVATE KEY-----_________----END PRIVATE KEY-----\n",
+    "client_email": "__________",
+    "client_id": "__________",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cfccustqual%40cfc-cust-qual.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+}
+
+How to use secrets manager API:
+```
+client = boto3.client('secretsmanager')
+try:
+    # Attempt to retrieve the secret value
+    get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+except ClientError as e:
+    # Handle the exception if the secret can't be retrieved
+    raise e
+```
+Use the gspread python module to connect to Google APIs. Use gspread.service_account_from_dict to authenticate. 
+Do not import the oauth2client module.
+
+Implement exponential backoff when hitting the Google APIs rate limits.
+To avoid rate limititing, use batch operations whenever possible. Example:
+
+```
+def get_column_name(n):
+    """A is 1, B is 2, AA is 27 etc."""
+    return (
+        "" if n == 0 else get_column_name((n - 1) // 26) + chr((n - 1) % 26 + ord("A"))
+    )
+
+def backoff(foo):
+    def bar(*args, **kwargs):
+        for i in range(5):
+            try:
+                return foo(*args, **kwargs)
+            except gspread.exceptions.APIError:
+                time.sleep(2**i)
+        raise Exception("Tried google 5 times.")
+
+    return bar
+
+@backoff
+def write_list_to_spreadsheet(ls, ws):
+    if not ls:
+        return
+    a1_notation = f"A:{get_column_name(len(ls[0]))}"
+    ws.batch_clear([a1_notation])
+    ws.update(a1_notation, ls, value_input_option="USER_ENTERED")
+```
+
+Implement all parts of the code, do not skip any details.

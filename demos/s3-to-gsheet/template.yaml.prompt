@@ -1,0 +1,37 @@
+Create AWS SAM template that would deploy the following items:
+
+- this DynamoDB table:
+<table_description>
+@raw(README.md)
+</table_description>
+- a Lambda function. It's source code is in 'lambda' folder. The handler is main.handler. Use python 3.12 and arm64 architecture.
+The Lambda function should execute every hour. The Lambda function should be configured with a 5 minute timeout and 2048Mb RAM.
+The Lambda function should be named the same as the stack - use AWS::StackName pseudo parameter to get the stack name.
+The Lambda function should have access to
+- read all S3 buckets in the account
+- read the secret value with GCP credentials. 
+- read, insert and delete items in the DynamoDB table.
+
+Lambda function should use the Lambda layer defined next.
+- Lambda layer that contains all dependencies. The layer is stored in the 'deps' folder.
+To make sam build it using the correct arch, include these lines:
+```
+    Metadata:
+      BuildMethod: python3.12
+      BuildArchitecture: arm64
+```
+
+Avoid these errors:
+```
+An error occurred (AccessDeniedException) when calling the GetSecretValue operation: 
+User: arn:aws:sts::552960913849:assumed-role/s3-gsheets-exporter-ExporterLambdaFunctionRole-Jg7wOgkhzduL/s3-gsheets-exporter is not 
+authorized to perform: secretsmanager:GetSecretValue on resource: s3-gsheets-exporter/gcp-creds because no identity-based policy
+allows the secretsmanager:GetSecretValue action
+
+Invalid Serverless Application Specification document. Number of errors found: 1. Resource with id [ExporterLambdaFunction] is invalid. 
+Policy at index 2 in the 'Policies' property is not valid
+
+Invalid Serverless Application Specification document. Number of errors found: 1. Transforming resource with id [ExporterLambdaFunction] 
+attempts to create a new resource with id [ExporterLambdaFunctionRole] and type "AWS::IAM::Role". A resource with that id already 
+exists within this template. Please use a different id for that resource.
+``

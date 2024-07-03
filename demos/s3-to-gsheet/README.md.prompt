@@ -1,0 +1,15 @@
+Describe the 'S3-GSHEET-EXPORTER' DynamoDB table as github markdown document.
+
+It has a single partition key named 'pk'. The value will always be 'schedule'.
+
+There will be records with timestamps as sort keys. Timestamp value indicates when the export
+should be run next time.
+
+Attributes:
+'every_x_hours' contains the number if hours between updates, eg. 24
+
+'s3_uri' points to a CSV file in an s3 bucket, such as 's3://bucket_name/prefix/filename.CSV'
+
+'sheet_id' is gsheets document id, such as '1vXKCJ6FmDsGCDKIY5y24fXKCqAYeNGodHZgM0yrCpxE'
+
+'tab_name' is  the target sheet name, such as 'data'

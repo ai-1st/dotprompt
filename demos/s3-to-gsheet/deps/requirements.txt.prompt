@@ -1,0 +1,7 @@
+Create requirements.txt for this code:
+<code>
+@raw(../lambda/main.py)
+</code>
+Do not include version numbers. Do not include system packages such as csv, json and io. 
+Don't include boto3 as we are preparing to deploy into AWS Lambda environment, where 
+boto3 is present already. 

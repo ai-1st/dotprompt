@@ -1,0 +1,37 @@
+Create a python cli script that allows to do list all records, add and remove records from this DynamoDB table:
+<table_description>
+@raw(README.md)
+</table_description>
+
+Note that 
+Use the click framework. Make sure the cli.py can be run
+```
+if __name__ == '__main__':
+    main()
+```
+
+Example invocation:
+```
+python3.12 cli.py add --timestamp 1 --every-x-hours 1 --s3-uri s3://bucket/prefix/file.csv --sheet-id 1vXKCJ6FmDsGCDKIY5yXKC24fqAYeXKCdHZgM0yrCpxE --tab-name dotprompt
+```
+
+Beware of this error when doing the list operation:
+TypeError: Object of type Decimal is not JSON serializable
+
+The script should also allow updating the Google API credentials 
+stored in Amazon Secrets Manager service in the secret named "s3-gsheets-exporter/gcp-creds" from a given JSON file.
+In this secret the following object is stored:
+{
+    "type": "service_account",
+    "project_id": "__________",
+    "private_key_id": "________",
+    "private_key": "-----BEGIN PRIVATE KEY-----_________----END PRIVATE KEY-----\n",
+    "client_email": "__________",
+    "client_id": "__________",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cfccustqual%40cfc-cust-qual.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+}
+If the secret doesn't exist, it should be created.
