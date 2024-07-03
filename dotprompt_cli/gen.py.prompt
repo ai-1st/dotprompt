@@ -9,6 +9,8 @@ Prompt files may contain @raw(filename) and @prompt(filename) directives. Exampl
 ```
   @raw(path/to/some/file.py)
   Some text @prompt(path/to/another/file.py.prompt) more text.
+  Even a relative @raw(../filename.txt) path is possible. The path is 
+  relative to the file that contains the directive.
 ```
 The directives may be inside the text. Use regular expressions to find them.
 The application shall replace these directives with the contents of the specified file.
@@ -24,7 +26,16 @@ using the --model parameter.
 - messages, an array of chat messages to pass to the model
 The function returns LLM's answer.
 
-Use these system instructions for the AI:
+The user may ask to process the dependencies using --dependencies option. In this case, when including 
+a file using @raw directive, the script should check if there's a corresponding .prompt file and process it first.
+An error should be shown to the user whenever a circular dependency is found.
+
+The user may ask to process a folder in a recursive manner using --recursive option. In this case, instead of
+passing a file name, the user provides a folder name. All .prompt files in this folder and its subfolders should
+be ordered so that dependencies are processed first. An error should be shown to the user whenever a circular 
+dependency is found. Skip any folders that start with a dot, such as '.aws-sam'.
+
+Use these system instructions when invoking the LLM:
 <instructions>Output just the file content, nothing else. Do not print any 
 introductory text before the code. Do not enclose the code in triple quotes. 
 Include a comment in the code
@@ -38,5 +49,6 @@ Also provide a one-shot example, such as
 
 Name the entry point function as 'main'.
 
-Please avoid these errors and warnings:
-ValueError: System message must be at beginning of message list.
+System message must be at beginning of message list.
+
+Print the name of each file being processed before starting the processing.

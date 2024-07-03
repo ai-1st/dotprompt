@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dotprompt-cli"
-version = "0.0.2"
+version = "0.0.3"
 description = "Generate files from AI prompts"
 authors = ["Dmitry Degtyarev <ddegtyarev@gmail.com>"]
 license = "MIT"
