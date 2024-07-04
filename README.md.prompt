@@ -4,7 +4,7 @@ Dmitry Degtyarev that explores the following idea:
 Currently, during programming, code is built through a series of iterations, where each
 iteration is done by a human or by AI. The resulting code doesn't let us see which prompts 
 were used to build it, and alter these prompts. It is like having a compiled binary without 
-the source code.
+the source code and continuing to work on the compiled binary.
 
 So the radical idea is - what if the code is 100% produced by AI, and humans only edit the 
 prompt used by AI?
@@ -15,16 +15,12 @@ A simple script can execute these .prompt files to build the code.
 
 A few implications:
 - this builder script itself can be built from a .prompt file. So the generator can generate itself. 
-The prompt for this can be found in demos/dotprompt folder in this project
+The prompt for this can be found in dotprompt_cli/gen.py.prompt file.
 - we can add another level of abstraction. The .prompt files can be built from other .prompt files.
 We could have program.prompt.prompt file containing higher-level ideas.
 - we could also try reverse engineering prompt files from the source code.
 
 A few features on the to-do list:
-- use some kind of templating engine for the .prompt files allowing them to include other prompts and/or
-source files. This could be useful if we want to generate documentation for a source file and thus 
-we need to include it in the prompt. The builder script would then analyse the dependency graph and
-start generating from prompts that do not have dependencies on the files produced by other prompts.
 - ability to produce several files from one prompt. This could be especially useful when producting the 
 code plus a unit test.
 - ability to run the unit tests and check if the code runs, if not - make necessary changes based on the 
@@ -33,5 +29,12 @@ exception/error messages.
 Use https://twitter.com/Mitek99 as a way to contact the author. Mention that the software uses the MIT license.
 Don't include the Acknoledgements section.
 
-Include a build section explaining how to build this project 
-using the 'build' python module and deploy it to pypi.
+Include an install section explaining that to install dotprompt, one needs to do
+```
+pip3 install dotprompt-cli
+```
+
+Include a usage section that explains all the parameters supported by the cli based on its source code:
+<code>
+@raw(dotprompt_cli/gen.py)
+</code>
