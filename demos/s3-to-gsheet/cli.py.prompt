@@ -1,6 +1,6 @@
 Create a python cli script that allows to do list all records, add and remove records from this DynamoDB table:
 <table_description>
-@raw(README.md)
+@include(README.md)
 </table_description>
 
 Note that 

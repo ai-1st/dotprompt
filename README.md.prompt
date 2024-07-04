@@ -36,5 +36,5 @@ pip3 install dotprompt-cli
 
 Include a usage section that explains all the parameters supported by the cli based on its source code:
 <code>
-@raw(dotprompt_cli/gen.py)
+@include(dotprompt_cli/gen.py)
 </code>

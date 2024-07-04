@@ -1,0 +1,5 @@
+Create a github markdown document explaining how exactly 
+to create a VS Code plugin that would allow running .prompt files.
+
+When a .prompt file is run, it should be executed using the `dotprompt` cli command.
+This cli command can be installed using `pip3 install dotprompt-cli`

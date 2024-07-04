@@ -1,0 +1,9 @@
+Create a sh script that runs `python3.12 -m dotprompt_cli.gen` with various options
+to make sure the code works as designed.
+
+It uses test/README.md.prompt file for as test input.
+
+The code being tested:
+<code>
+@include(dotprompt_cli/gen.py)
+</code>

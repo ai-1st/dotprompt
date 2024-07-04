@@ -4,7 +4,7 @@ Use Python for implementation. Lambda handler function should be named 'handler'
 
 The Lambda function should read its config from a DynamoDB table named 'S3-GSHEET-EXPORTER'.
 <table_description>
-@raw(../README.md)
+@include(../README.md)
 </table_description>
 
 The Lambda function shall read only the records with 

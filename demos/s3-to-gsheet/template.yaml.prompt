@@ -2,7 +2,7 @@ Create AWS SAM template that would deploy the following items:
 
 - this DynamoDB table:
 <table_description>
-@raw(README.md)
+@include(README.md)
 </table_description>
 - a Lambda function. It's source code is in 'lambda' folder. The handler is main.handler. Use python 3.12 and arm64 architecture.
 The Lambda function should execute every hour. The Lambda function should be configured with a 5 minute timeout and 2048Mb RAM.

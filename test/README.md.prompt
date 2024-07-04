@@ -1,0 +1,5 @@
+Create a markdown doc explaining the following code:
+
+```
+@include(rewrite.py)
+```
