@@ -1,6 +1,6 @@
 # Creating a VS Code Plugin for Running .prompt Files
 
-<!-- This file was produced by AI from a prompt and shouldn't be edited directly. -->
+<!-- This file was produced by https://github.com/ai-1st/dotprompt and shouldn't be edited directly. -->
 
 This guide will walk you through the process of creating a Visual Studio Code extension that allows running `.prompt` files using the `dotprompt` CLI command.
 
