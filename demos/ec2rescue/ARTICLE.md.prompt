@@ -1,0 +1,133 @@
+Create an article to post on Medium. Use markdown. The article should explain how to
+automate the recovery of the Windows machines affected by CrowdStrike failure.
+
+The article should include links to the github repository where the solution is stored.
+
+Use the information from the AWS post as necessary to explain the solution and create 
+an exciting story around it.
+
+<solution>
+@include(README.md)
+</solution>
+
+<aws_post>
+How do I recover AWS resources that were affected by the CrowdStrike Falcon agent?
+8 minute read
+4
+I can’t connect to AWS resources that the CrowdStrike Falcon agent is installed on.
+
+Short description
+On July 18th 2024, an update to the CrowdStrike Falcon agent (csagent.sys) caused Windows based devices to experience unplanned stop errors or blue screen. This includes Amazon Elastic Compute Cloud (Amazon EC2) instances and Amazon WorkSpaces Personal virtual desktops. This issue only affects Windows Amazon EC2 instances and personal WorkSpaces with CrowdStrike installed.
+
+Usually a reboot of your instance or WorkSpace allows the CrowdStrike Falcon agent to update successfully. If a reboot doesn't resolve the issue, then complete the following steps to resolve the issue.
+
+Note: If your instance uses instance store volumes, then data that's stored on those volumes doesn't persist when the instance is stopped, hibernated, or terminated. When the instance is stopped, hibernated, or terminated, the instance store volume is cryptographically erased. For more information, see Amazon EC2 instance store.
+
+Resolution
+Restore Amazon EC2 instances
+If a reboot doesn't restore the instance to a healthy state, then complete the following steps to use the automated runbook or manual method.
+
+Note:
+
+If you receive errors when you run AWS Command Line Interface (AWS CLI) commands, then see Troubleshoot AWS CLI errors. Also, make sure that you're using the most recent AWS CLI version.
+If your root Amazon Elastic Block Store (Amazon EBS) volume is encrypted, then make sure the encryption key exists in your account and that you have permission to use it.
+Identify impaired instances
+
+To identify failed instances, run the AWS CLI command describe-instance-status similar to the following:
+
+Note: Replace your-region with your AWS Region.
+
+aws ec2 describe-instance-status --filters Name=instance-status.status,Values=impaired --query "InstanceStatuses[*].InstanceId" --region your-region
+Option 1 - Use the AWS Systems Manager automation runbook
+
+Note: The AWSSupport-StartEC2RescueWorkflow Systems Manager automation runbook stops your instance. If your instance uses instance store volumes, then use the manual recovery method.
+
+Before you start the AWSSupport-StartEC2RescueWorkflow runbook, make sure that your AWS Identify and Access Management (IAM) user or role has the required permissions. For more information, see the Required IAM permissions section of AWSSupport-StartEC2RescueWorkflow. You must also add kms:CreateGrant permission to the IAM role.
+
+To use AWSSupport-StartEC2RescueWorkflow to automate recovery, open the runbook on the Systems Manager console, and select the AWS Region and instances you need to recover. If your EBS root volume is encrypted, then set AllowEncryptedVolume to True.
+
+This workflow launches a temporary EC2 instance (helper instance) in a virtual private cloud (VPC). The launched instance is automatically associated with the default security group of the VPC. The default security group must allow outbound HTTPS (port 443) communication to both Amazon S3 and Systems Manager endpoints. This ensures that the instance can reach the required AWS services to complete the configured workflow tasks. The instance mounts the root volume of the selected instances, and runs the following command to delete the affected file:
+
+get-childitem -path "$env:EC2RESCUE_OFFLINE_DRIVE\Windows\System32\drivers\CrowdStrike\" -Include C-00000291*.sys -Recurse | foreach { $_.Delete()}
+To verify the content of the Base64 OfflineScript payload from the preceding command, run the following command:
+
+PS C:\Windows\system32> [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("[REPLACE_WITH_BASE64_HERE]"))
+Option 2 - Use the manual recovery method
+
+Complete the following steps:
+
+Create a snapshot of the instance's EBS root volume.
+Create a new EBS volume from the snapshot in the same Availability Zone.
+Launch a new Windows instance in the same Availability Zone.
+Attach the new EBS volume to the new instance as a data volume.
+Download EC2Rescue for Windows Server tool to the helper instance.
+Right click on EC2Rescue.exe, and then choose Run As Administrator.
+Select I agree on the License Agreement.
+On the Welcome screen, choose Next.
+On the Select Mode screen, choose Offline Instance.
+Select the offline disk, and then choose Next. When prompted, select Yes and then OK.
+Keep EC2 Rescue running.
+Navigate to the X:\Windows\System32\drivers\CrowdStrike\ folder on the attached volume, and then delete C-00000291*.sys.
+Note: In this example, X: is the drive letter assigned to the secondary EBS volume from the affected instance. It might be a different letter in your environment.
+Return to EC2 Rescue.
+Choose Diagnose and Rescue, and then choose Next.
+Keep all options as default.
+Choose Next, and then choose Next again.
+When prompted, choose Rescue, choose OK, and then Next.
+Choose Finish.
+On the pop-up window that appears, select Fix disk signature, and then choose OK.
+If Fix disk signature is greyed out, then choose OK.
+Detach the EBS volume from the new instance.
+Create a snapshot of the detached EBS volume.
+Select the same volume type (for example, gp2 or gp3) as the affected instance, and then create an Amazon Machine Image (AMI) from the snapshot.
+Replace the root volume on the original EC2 instance and specify the AMI.
+Amazon WorkSpaces
+If multiple reboots don't return the WorkSpace to a healthy state, you can restore the WorkSpace to a previous snapshot. You can restore a WorkSpace to a previous snapshot that's taken up to 12 hours before the restore was initiated. If the WorkSpace restore doesn't return to a healthy state, then you can rebuild the WorkSpace.
+
+Note: After 12 hours, you must rebuild the WorkSpace to restore the root volume on the WorkSpace image.
+
+Troubleshooting
+If the preceding steps don't resolve connectivity to your EC2 instance, then follow these troubleshooting steps for your recovery option.
+
+Recovery option 1 - Systems Manager automation runbook
+
+Problem: The helper Instance can't connect to the SSM Endpoint. This can cause a failure in the automation workflow waitForEc2RescueInstanceToBeManaged step of the AWSSupport-StartEC2RescueWorkflow runbook.
+
+Solution: Ensure that the default security group permits outbound communication (TCP port 443) to reach the Systems Manager Endpoints. Ensure that the subnet chosen has connectivity to the public Systems Manager endpoints, or that there is a VPC Endpoint for Systems Manager. Also, make sure that the AssociatePublicIpAddress parameter is set to True if you chose a public subnet. Alternatively, set the parameter SubnetId as CreateNewVPC for the automaton to create a new VPC with the required connectivity.
+
+Problem: Affected instance fails to stop due to stop protection turned on.
+
+Solution: Turn off stop protection for the affected instance and re-run the automation.
+
+Note: If your instance uses instance store volumes, then data that's stored on those volumes doesn't persist when the instance is stopped.
+
+Problem: The helper instance fails to launch.
+
+Solution: The instance type selected for the EC2Rescue instance might not be available in the Availability Zone of the subnet of the helper instance. Use a supported instance type in the same Availability Zone as the helper instance.
+
+Problem: The automation fails when it verifies that the AWS CloudFormation stack creation has completed with the error "Stack AWSSupport-EC2Rescue-{UUID} entered unexpected state: DELETE_IN_PROGRESS"
+
+Solution: Get the UUID ID and open the CloudFormation console to verify the reason for stack creation failure. This failure might occur if you don't have permissions to create the stack resources. For more information, see the Required IAM permissions section of AWSSupport-StartEC2RescueWorkflow and How can I troubleshoot access denied or unauthorized operation errors with an IAM policy?
+
+Problem: The runbook fails in the automation workflow assertInstanceRootVolumeIsNotEncrypted step because of an encrypted EBS volume.
+
+Solution: If the volume uses EBS encryption, then set the SSM document parameter AllowEncryptedVolume to True.
+
+Problem: The default VPC was deleted.
+
+Resolution: Set the SSM document parameter SubnetId as CreateNewVPC. This creates a new VPC that allows the instance to recover successfully.
+
+Problem: The automation workflow detachInstanceRootVolume step fails with the error message "error occurred (IncorrectState) when calling the DetachVolume operation: Unable to detach root volume".
+
+Solution: Make sure the instance remains in the stopped state when you run the automation workflow.
+
+Recovery option 2 - manual recovery method
+
+Problem: The instance fails to boot with the error "the application or operating system couldn't be loaded because a registered file is missing or contains errors"
+
+Solution: If you didn't select Fix disk signature in the preceeding Option 2 - Use the manual recovery method section, then you might have a disk signature collision.
+
+To resolve this issue, follow step 8 in the Option 2 - Use the manual recovery method section or if you performed the restoration without EC2 Rescue, use the guidance in the EC2 Windows Troubleshooting guide.
+
+Note: If the preceding troubleshooting steps don't resolve connectivity to your EC2 instance, then contact AWS Support. Make sure that you capture a screenshot of the unreachable instance.
+<aws_post>

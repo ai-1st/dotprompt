@@ -1,0 +1,14 @@
+Generate a README.md file using github markdown that describes the lambda function created
+using the following prompt:
+
+<prompt>
+@include(handler.py.prompt)
+</prompt>
+
+There's also a cloudformation template named cf.yaml that deploys this lambda using all the necessary permissions.
+<code>
+@include(cf.yaml)
+</code>
+
+Please include the instructions on how to deploy this stack using aws cli, how to redeploy it, and
+how to run the lambda function.

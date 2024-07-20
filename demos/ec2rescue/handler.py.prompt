@@ -1,0 +1,49 @@
+<context>
+The CrowdStrike Falcon content update for Windows has caused widespread system crashes 
+and "blue screen of death" (BSOD) errors. This also affects AWS EC2 instances which
+are getting into infinite reboot loop. The solution was described by Amazon in this article:
+https://repost.aws/en/knowledge-center/ec2-instance-crowdstrike-agent
+The step involve running AWSSupport-StartEC2RescueWorkflow SSM runbook on all affected instances
+and running a PowerShell script that removes a specific driver file.
+</context>
+
+
+Create a lambda function in python that does the following:
+
+Fetches a list of all active aws ec2 regions
+
+For each region, fetches the list of running ec2 instances that are using windows operating system.
+
+Fetches the list of all instance ids of the instances in the impaired state using the describe_instance_status API.
+Appends to the list the test instance id provided using "TestInstanceId" lambda parameter. 
+The default value for "TestInstanceId" is "i-0f62223f986e61018".
+
+Intersects the two lists to get a list of impaired windows instances and possible test instance.
+
+For each impaired windows instance and the test instance if any, executes the SSM Runbook named "AWSSupport-StartEC2RescueWorkflow"
+with these params:
+"CreatePreEC2RescueBackup": ["True"],
+"InstanceId": [the id of the instance]
+"OfflineScript": [the script that is passed as the parameter to the lambda function]
+
+There should be a default PowerShell script doing the following:
+<code>
+get-childitem -path "$env:EC2RESCUE_OFFLINE_DRIVE\Windows\System32\drivers\CrowdStrike\" -Include C-00000291*.sys -Recurse | foreach { $_.Delete()}
+</code>
+
+Escape the \ when including the script in the lambda function.
+Make sure the lambda logs every step using print() and also appends the logs to the lambda output
+and an array of strings.
+Process all regions in parallel using ThreadPoolExecutor
+Don't forget to base64 encode the OfflineScript
+If the code is executed locally, it should run the lambda_handler with empty event and context
+Wrap all AWS calls in try/except and log the error
+
+Avoid these errors:
+SyntaxWarning: invalid escape sequence '\W'
+An error occurred (InvalidParameterValue) when calling the DescribeInstances operation: The filter 'instance-status.status' is invalid
+An error occurred (InvalidAutomationExecutionParametersException) when calling the StartAutomationExecution operation: Parameter "CreatePreEC2RescueBackup" has value "true" not found in [True, False].
+
+
+
+

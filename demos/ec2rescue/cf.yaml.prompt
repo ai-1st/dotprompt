@@ -1,0 +1,9 @@
+create a cloudformation template that creates a lambda function and sets all the needed permissions 
+for it to run. the lambda function code should be embedded in the template.
+here's the lambda function code to use:
+
+<code>
+@include(handler.py)
+</code>
+
+make sure the lambda execution role is based upon Admin managed policy.
