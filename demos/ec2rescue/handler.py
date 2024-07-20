@@ -1,9 +1,9 @@
+# This file was produced by https://github.com/ai-1st/dotprompt and shouldn't be edited directly.
+
 import boto3
 import base64
 from concurrent.futures import ThreadPoolExecutor
 import json
-
-# This file was produced by https://github.com/ai-1st/dotprompt and shouldn't be edited directly.
 
 def lambda_handler(event, context):
     logs = []

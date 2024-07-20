@@ -1,73 +1,95 @@
-# AWS Lambda Function for EC2 Rescue Workflow
+# EC2 Rescue Workflow Lambda Function
 
-This repository contains a Lambda function and CloudFormation template to automate the execution of the AWSSupport-StartEC2RescueWorkflow SSM runbook on Windows EC2 instances affected by the CrowdStrike Falcon content update issue.
+This repository contains a Lambda function and CloudFormation template designed to automate the process of rescuing impaired Windows EC2 instances affected by the CrowdStrike Falcon content update.
 
 ## Overview
 
 The Lambda function performs the following tasks:
 
 1. Fetches a list of all active AWS EC2 regions
-2. For each region, retrieves running Windows EC2 instances with status 'ok' or 'impaired'
-3. Executes the AWSSupport-StartEC2RescueWorkflow SSM runbook on each affected instance
-4. Runs a PowerShell script to remove a specific driver file causing the issue
+2. For each region, identifies running Windows EC2 instances
+3. Identifies impaired instances and includes a test instance if specified
+4. Executes the `AWSSupport-StartEC2RescueWorkflow` SSM runbook for each impaired instance
+5. Logs the process and returns the results
 
-## Prerequisites
+## Deployment Instructions
+
+### Prerequisites
 
 - AWS CLI installed and configured with appropriate permissions
-- Python 3.8 or later
+- An AWS account with necessary permissions to create Lambda functions, IAM roles, and execute SSM runbooks
 
-## Deployment
+### Deploying the Stack
 
-### Initial Deployment
+1. Save the CloudFormation template to a file named `cf.yaml`.
 
-To deploy the CloudFormation stack using the AWS CLI, run the following command:
+2. Open a terminal and navigate to the directory containing `cf.yaml`.
 
-```bash
-aws cloudformation create-stack --stack-name EC2RescueWorkflowStack --template-body file://cf.yaml --capabilities CAPABILITY_IAM
-```
+3. Run the following AWS CLI command to create the stack:
 
-### Redeployment
+   ```
+   aws cloudformation create-stack --stack-name EC2RescueWorkflowStack --template-body file://cf.yaml --capabilities CAPABILITY_IAM
+   ```
 
-To update an existing stack, use the following command:
+4. Wait for the stack creation to complete. You can check the status using:
 
-```bash
-aws cloudformation update-stack --stack-name EC2RescueWorkflowStack --template-body file://cf.yaml --capabilities CAPABILITY_IAM
-```
+   ```
+   aws cloudformation describe-stacks --stack-name EC2RescueWorkflowStack --query 'Stacks[0].StackStatus'
+   ```
+
+   Wait until the status is `CREATE_COMPLETE`.
+
+### Redeploying the Stack
+
+If you need to update the Lambda function or make changes to the stack:
+
+1. Make your changes to the `cf.yaml` file.
+
+2. Run the following AWS CLI command to update the stack:
+
+   ```
+   aws cloudformation update-stack --stack-name EC2RescueWorkflowStack --template-body file://cf.yaml --capabilities CAPABILITY_IAM
+   ```
+
+3. Wait for the update to complete, checking the status as before.
 
 ## Running the Lambda Function
 
-To invoke the Lambda function using the AWS CLI, use the following command:
+To invoke the Lambda function:
 
-```bash
-aws lambda invoke --function-name EC2RescueWorkflowLambda --payload '{}' output.json
-```
+1. Create a JSON file named `input.json` with the following content (customize as needed):
 
-This will execute the Lambda function with default parameters. The output will be stored in `output.json`.
+   ```json
+   {
+     "TestInstanceId": "i-0f62223f986e61018",
+     "OfflineScript": "get-childitem -path \"$env:EC2RESCUE_OFFLINE_DRIVE\\Windows\\System32\\drivers\\CrowdStrike\\\" -Include C-00000291*.sys -Recurse | foreach { $_.Delete()}"
+   }
+   ```
 
-To provide a custom PowerShell script, you can pass it as part of the payload:
+2. Run the following AWS CLI command:
 
-```bash
-aws lambda invoke --function-name EC2RescueWorkflowLambda --payload '{"OfflineScript": "Your custom PowerShell script here"}' output.json
-```
+   ```
+   aws lambda invoke --function-name EC2RescueWorkflowLambda --payload file://input.json output.json
+   ```
 
-## Monitoring
+3. The function's output will be saved in `output.json`. You can view it using:
 
-You can monitor the execution of the Lambda function and the SSM Automation executions in the AWS Management Console:
+   ```
+   cat output.json
+   ```
 
-1. Check the CloudWatch Logs for the Lambda function to see detailed execution logs.
-2. Visit the AWS Systems Manager Automation console to view the status of individual SSM Automation executions.
+## Notes
+
+- The Lambda function has a timeout of 900 seconds (15 minutes) and 256 MB of memory. Adjust these in the CloudFormation template if needed.
+- The function uses the AdministratorAccess managed policy for simplicity. In a production environment, you should create a more restrictive custom policy.
+- Always test in a non-production environment first before running in production.
 
 ## Security Considerations
 
-- The Lambda function is granted permissions to describe EC2 instances and regions, and to start SSM Automation executions.
-- Ensure that your AWS account has the necessary permissions to run the AWSSupport-StartEC2RescueWorkflow SSM runbook.
-- Review and adjust the IAM roles and policies as needed for your specific security requirements.
+- The Lambda function is granted administrative access. In a production environment, follow the principle of least privilege and grant only the necessary permissions.
+- Ensure that your AWS account is properly secured and that access to the Lambda function is restricted to authorized personnel only.
 
 ## Troubleshooting
 
-- If you encounter permission issues, verify that the Lambda execution role has the necessary permissions.
-- For any errors during execution, check the CloudWatch Logs for the Lambda function for detailed error messages.
-
-## Disclaimer
-
-This solution is provided as-is. Always test in a non-production environment before running in production. Ensure you understand the actions performed by the SSM runbook and the PowerShell script before execution.
+- If you encounter any issues, check the CloudWatch Logs for the Lambda function for detailed error messages and logs.
+- Ensure that your AWS CLI is properly configured with the correct credentials and region.

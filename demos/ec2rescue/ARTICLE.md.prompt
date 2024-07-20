@@ -1,10 +1,11 @@
 Create an article to post on Medium. Use markdown. The article should explain how to
-automate the recovery of the Windows machines affected by CrowdStrike failure.
+automate the recovery of the Windows machines in AWS affected by CrowdStrike failure.
 
-The article should include links to the github repository where the solution is stored.
+The article should include this link to the github repo with the solution:
+https://github.com/ai-1st/dotprompt/blob/main/demos/ec2rescue
 
 Use the information from the AWS post as necessary to explain the solution and create 
-an exciting story around it.
+an exciting story around it. Link back to the AWS post https://repost.aws/en/knowledge-center/ec2-instance-crowdstrike-agent
 
 <solution>
 @include(README.md)

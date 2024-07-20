@@ -10,7 +10,7 @@ Imagine waking up to find your entire fleet of Windows EC2 instances unresponsiv
 
 ## The Solution
 
-We've developed a Lambda function that automates the execution of the AWSSupport-StartEC2RescueWorkflow SSM runbook on affected Windows EC2 instances. This solution, available on our [GitHub repository](https://github.com/yourusername/your-repo-name), offers a streamlined approach to recovering from the CrowdStrike Falcon content update issue.
+We've developed a Lambda function that automates the execution of the AWSSupport-StartEC2RescueWorkflow SSM runbook on affected Windows EC2 instances. This solution, available on our [GitHub repository](https://github.com/ai-1st/dotprompt/blob/main/demos/ec2rescue), offers a streamlined approach to recovering from the CrowdStrike Falcon content update issue.
 
 ### How It Works
 
@@ -56,8 +56,8 @@ Our solution demonstrates how, with a bit of ingenuity and AWS's robust set of t
 
 Remember, while this solution is tailored for the CrowdStrike issue, the principles behind it can be applied to various other scenarios. It's a testament to the flexibility and power of cloud computing and automation.
 
-For more details and to implement this solution in your environment, visit our [GitHub repository](https://github.com/yourusername/your-repo-name). Let's embrace automation and be better prepared for whatever challenges the future might bring!
+For more details and to implement this solution in your environment, visit our [GitHub repository](https://github.com/ai-1st/dotprompt/blob/main/demos/ec2rescue). Let's embrace automation and be better prepared for whatever challenges the future might bring!
 
 ---
 
-*This article is based on a real-world scenario and solution. Always ensure you understand the actions performed by any automation scripts before running them in your environment. Test thoroughly in a non-production setting before applying to critical systems.*
+*This article is based on a real-world scenario and solution. Always ensure you understand the actions performed by any automation scripts before running them in your environment. Test thoroughly in a non-production setting before applying to critical systems. For more information on the CrowdStrike Falcon agent issue and AWS's official guidance, refer to the [AWS Knowledge Center article](https://repost.aws/en/knowledge-center/ec2-instance-crowdstrike-agent).*

@@ -1,26 +1,11 @@
-# This file was produced by https://github.com/ai-1st/dotprompt and shouldn't be edited directly.
-
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation template for Lambda function with embedded code
+Description: 'CloudFormation template for Lambda function with necessary permissions'
 
 Resources:
-  LambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AdministratorAccess
-
   LambdaFunction:
-    Type: AWS::Lambda::Function
+    Type: 'AWS::Lambda::Function'
     Properties:
-      FunctionName: EC2RescueWorkflowLambda
+      FunctionName: EC2RescueWorkflow
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: python3.8
@@ -28,12 +13,12 @@ Resources:
       MemorySize: 256
       Code:
         ZipFile: |
+          # This file was produced by https://github.com/ai-1st/dotprompt and shouldn't be edited directly.
+
           import boto3
           import base64
           from concurrent.futures import ThreadPoolExecutor
           import json
-
-          # This file was produced by https://github.com/ai-1st/dotprompt and shouldn't be edited directly.
 
           def lambda_handler(event, context):
               logs = []
@@ -145,6 +130,19 @@ Resources:
 
           if __name__ == "__main__":
               print(json.dumps(lambda_handler({}, None), indent=2))
+
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
 
 Outputs:
   LambdaFunctionArn:
