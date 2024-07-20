@@ -1,73 +1,90 @@
-# Automated Recovery of Windows EC2 Instances Affected by CrowdStrike Failure
+# Automating Recovery of Windows EC2 Instances Affected by CrowdStrike Failure
 
-On July 18th, 2024, a significant event occurred that sent shockwaves through the AWS ecosystem. An update to the CrowdStrike Falcon agent (csagent.sys) caused Windows-based devices, including Amazon EC2 instances and WorkSpaces, to experience unplanned stop errors or blue screens. This incident left many system administrators scrambling to recover their affected resources.
+On July 18th, 2024, a significant event occurred that affected many Windows-based AWS resources. An update to the CrowdStrike Falcon agent (csagent.sys) caused Windows-based devices, including Amazon EC2 instances and Amazon WorkSpaces, to experience unplanned stop errors or blue screens. This incident left many system administrators scrambling to recover their affected resources.
 
-In this article, we'll explore an automated solution to this problem, demonstrating how to leverage AWS Lambda and Systems Manager to efficiently recover impaired Windows EC2 instances across multiple regions.
+In this article, we'll explore an automated solution to recover these impaired Windows EC2 instances efficiently and at scale. We'll dive into a Lambda function that leverages the AWS Systems Manager automation runbook to streamline the recovery process.
 
 ## The Challenge
 
-The CrowdStrike Falcon agent update affected numerous Windows EC2 instances, causing them to become unresponsive. While a simple reboot resolved the issue for some instances, others remained in an impaired state. Manual recovery processes were time-consuming and error-prone, especially for organizations managing large fleets of EC2 instances across multiple AWS regions.
+The CrowdStrike Falcon agent update issue affected a large number of Windows EC2 instances across multiple AWS regions. While a simple reboot resolved the problem for some instances, many remained in an impaired state, requiring more extensive intervention.
+
+Manually recovering these instances would be a time-consuming and error-prone process, especially for organizations managing a large fleet of EC2 instances across multiple regions.
 
 ## The Solution
 
-To address this challenge, we've developed an automated solution using AWS Lambda and the AWSSupport-StartEC2RescueWorkflow Systems Manager automation runbook. This solution can identify impaired instances across all AWS regions and initiate the recovery process automatically.
+To address this challenge, we've developed a Lambda function that automates the recovery process using the `AWSSupport-StartEC2RescueWorkflow` Systems Manager automation runbook. This solution can be found in our GitHub repository: [EC2 Rescue Workflow Lambda Function](https://github.com/ai-1st/dotprompt/blob/main/demos/ec2rescue).
 
-The core of our solution is a Lambda function that performs the following tasks:
+Here's how the Lambda function works:
 
-1. Fetches a list of all active AWS EC2 regions
-2. Identifies running Windows EC2 instances in each region
-3. Detects impaired instances (and optionally includes a test instance)
-4. Executes the AWSSupport-StartEC2RescueWorkflow SSM runbook for each impaired instance
-5. Logs the process and returns the results
+1. It fetches a list of all active AWS EC2 regions.
+2. For each region, it identifies running Windows EC2 instances.
+3. It then identifies impaired instances and includes a test instance if specified.
+4. The function executes the `AWSSupport-StartEC2RescueWorkflow` SSM runbook for each impaired instance.
+5. Finally, it logs the process and returns the results.
 
-You can find the complete implementation of this solution in our GitHub repository: [EC2 Rescue Workflow Lambda Function](https://github.com/ai-1st/dotprompt/blob/main/demos/ec2rescue)
+## Key Features
 
-## How It Works
+1. **Multi-Region Support**: The function operates across all active EC2 regions, ensuring comprehensive coverage of your AWS infrastructure.
 
-The Lambda function leverages the AWS SDK to interact with EC2 and Systems Manager services across all regions. Here's a high-level overview of the process:
+2. **Automated Instance Identification**: It automatically identifies impaired Windows instances, reducing the need for manual intervention.
 
-1. **Region Discovery**: The function starts by fetching a list of all active EC2 regions in your AWS account.
+3. **Scalability**: The solution can handle recovery for multiple instances across various regions simultaneously.
 
-2. **Instance Identification**: For each region, it identifies running Windows EC2 instances.
+4. **Customization**: You can specify a test instance ID and provide a custom offline script for more tailored recovery processes.
 
-3. **Impairment Detection**: The function then checks the status of each instance to determine if it's impaired. It also allows for the inclusion of a test instance if specified.
-
-4. **Recovery Initiation**: For each impaired instance, the function initiates the AWSSupport-StartEC2RescueWorkflow SSM runbook. This runbook performs the following actions:
-   - Stops the impaired instance
-   - Launches a temporary helper instance
-   - Attaches the impaired instance's root volume to the helper instance
-   - Deletes the problematic CrowdStrike file
-   - Reattaches the root volume to the original instance
-   - Starts the recovered instance
-
-5. **Logging and Reporting**: Throughout the process, the function logs its actions and ultimately returns a summary of the recovery operations.
+5. **Logging and Reporting**: The function logs its actions and provides a detailed report of the recovery process.
 
 ## Deployment and Usage
 
-To deploy this solution, you'll need to:
+The solution is packaged as a CloudFormation template, making it easy to deploy in your AWS environment. Here's a quick overview of the deployment process:
 
-1. Save the CloudFormation template provided in the GitHub repository.
-2. Use the AWS CLI or CloudFormation console to create a new stack using this template.
-3. Once deployed, you can invoke the Lambda function manually or set up a trigger based on your needs.
+1. Save the CloudFormation template to a file named `cf.yaml`.
+2. Use the AWS CLI to create the stack:
 
-For detailed deployment instructions and usage guidelines, please refer to the README in the GitHub repository.
+```bash
+aws cloudformation create-stack --stack-name EC2RescueWorkflowStack --template-body file://cf.yaml --capabilities CAPABILITY_IAM
+```
 
-## Benefits of This Approach
+3. Once deployed, you can invoke the Lambda function with a JSON payload specifying any test instances and custom offline scripts.
 
-This automated solution offers several advantages over manual recovery methods:
+For detailed deployment instructions and usage guidelines, please refer to the README in our [GitHub repository](https://github.com/ai-1st/dotprompt/blob/main/demos/ec2rescue).
 
-1. **Speed**: It can rapidly identify and initiate recovery for impaired instances across all regions simultaneously.
-2. **Consistency**: The automated process ensures that the same recovery steps are applied consistently to all affected instances.
-3. **Scalability**: Whether you have 10 or 10,000 affected instances, this solution can handle the load.
-4. **Reduced Human Error**: By automating the process, we minimize the risk of mistakes that can occur during manual recovery.
-5. **Comprehensive Coverage**: The solution checks all regions, ensuring no affected instances are overlooked.
+## The Recovery Process
+
+The Lambda function utilizes the `AWSSupport-StartEC2RescueWorkflow` Systems Manager automation runbook to perform the recovery. This runbook performs the following steps:
+
+1. Launches a temporary EC2 instance (helper instance) in a VPC.
+2. Mounts the root volume of the affected instance to the helper instance.
+3. Runs a command to delete the problematic CrowdStrike file:
+
+```powershell
+get-childitem -path "$env:EC2RESCUE_OFFLINE_DRIVE\Windows\System32\drivers\CrowdStrike\" -Include C-00000291*.sys -Recurse | foreach { $_.Delete()}
+```
+
+4. Unmounts the volume and terminates the helper instance.
+
+This process effectively removes the faulty CrowdStrike file without the need to manually access each affected instance.
+
+## Considerations and Best Practices
+
+While this automated solution can significantly speed up the recovery process, it's important to keep the following points in mind:
+
+1. **Testing**: Always test the solution in a non-production environment before running it on production instances.
+
+2. **Permissions**: The Lambda function requires administrative access. In a production environment, follow the principle of least privilege and grant only the necessary permissions.
+
+3. **Encrypted Volumes**: If your EBS root volumes are encrypted, ensure that the encryption keys are accessible and that you have the necessary permissions.
+
+4. **Instance Store Volumes**: Be aware that data on instance store volumes does not persist when an instance is stopped. If your instances use instance store volumes, consider using the manual recovery method instead.
+
+5. **Monitoring**: Keep an eye on the CloudWatch Logs for the Lambda function to catch and address any issues that may arise during the recovery process.
 
 ## Conclusion
 
-The CrowdStrike Falcon agent update incident serves as a reminder of the importance of having robust, automated recovery processes in place. By leveraging AWS services like Lambda and Systems Manager, we can create powerful solutions that help us respond quickly and effectively to such incidents.
+The CrowdStrike Falcon agent update issue of July 2024 served as a stark reminder of the importance of having robust, automated recovery processes in place. By leveraging AWS services like Lambda and Systems Manager, we can create powerful solutions that allow us to respond quickly and efficiently to such incidents.
 
-While this solution was developed in response to a specific event, the underlying principles and techniques can be adapted to address a wide range of EC2 instance recovery scenarios. As cloud environments grow increasingly complex, such automated solutions will become essential tools in every cloud administrator's toolkit.
+The automated recovery solution presented here demonstrates how we can use AWS's native tools to build resilient systems that can recover from failures with minimal manual intervention. As cloud environments grow more complex, such automation becomes not just beneficial, but essential for maintaining system reliability and minimizing downtime.
 
-For more information about the CrowdStrike incident and alternative recovery methods, you can refer to the [AWS knowledge center article](https://repost.aws/en/knowledge-center/ec2-instance-crowdstrike-agent).
+For more information on the CrowdStrike issue and alternative recovery methods, you can refer to the [AWS knowledge center article](https://repost.aws/en/knowledge-center/ec2-instance-crowdstrike-agent).
 
-Remember, in the world of cloud computing, automation is not just a convenience—it's a necessity. Stay prepared, stay automated, and keep your cloud resources running smoothly!
+Remember, in the world of cloud computing, automation is your best friend. It not only saves time but also reduces the risk of human error in critical recovery processes. Stay prepared, stay automated!
